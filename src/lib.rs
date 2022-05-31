@@ -140,3 +140,34 @@ pub fn execcmd(cmd_e: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
 
     cmd.status()
 }
+
+use std::fs;
+
+pub fn parsescript(path: &String, config: &Config) {
+    let content: String = match fs::read_to_string(&path) {
+        Err(e) => {
+            eprintln!("rssh: failed to read from {path}. {e}");
+            if config.error_ex == true {
+                exit(255);
+            }
+            return;
+        },
+        Ok(o) => o,
+    };
+
+    for i in content.lines() {
+        if i.len() < 1 {
+            continue;
+        }
+        if i.chars().nth(0).unwrap() == '#' {
+            continue;
+        }
+
+        let res = execcmd(parsecmd(&i.to_string()));
+        if config.error_ex == true {
+            if !res.unwrap().success() {
+                exit(1);
+            }
+        }
+    }
+}

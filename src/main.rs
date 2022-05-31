@@ -41,6 +41,13 @@ fn prompt(config: &lib::Config) {
 fn main() {
     let config = lib::Config::new();
 
+    if config.scripts.len() > 0 {
+        for i in &config.scripts {
+            lib::parsescript(&i, &config);
+        }
+        exit(0);
+    }
+
     loop {
         prompt(&config);
     }
