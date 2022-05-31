@@ -29,8 +29,10 @@ fn prompt(config: &lib::Config) {
             }
         }
         Ok(num) => {
-            if !num.success() {
-                exit(1);
+            if config.error_ex == true {
+                if !num.success() {
+                    exit(1);
+                }
             }
         }
     }
