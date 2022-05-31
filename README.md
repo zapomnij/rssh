@@ -2,9 +2,9 @@
 
 ### Installation
 rssh runtime dependencies:
-    - rust compiler
-    - cargo (default rust build system)
-    - POSIX compatible operating system. Windows is not supported!
+- rust compiler
+- cargo (default rust build system)
+- POSIX compatible operating system. Windows is not supported!
 
 To install rssh type
 
