@@ -34,11 +34,16 @@ impl Config {
 
         if matches.opt_present("h") {
             println!("rssh - simple unix shell written in rust");
-            println!("Usage: {} ( -h ) [ -c command ] [ -e ] [ scripts ]\n", args[0]);
+            println!(
+                "Usage: {} ( -h ) [ -c command ] [ -e ] [ scripts ]\n",
+                args[0]
+            );
             println!("Options:");
             println!("  -h, --help              -> Display help message");
             println!("  -c, --command 'command' -> Execute command from shell argument");
-            println!("  -e, --error             -> Shell will be terminated, if command gets error");
+            println!(
+                "  -e, --error             -> Shell will be terminated, if command gets error"
+            );
             exit(0);
         }
 
