@@ -20,7 +20,7 @@ fn prompt(config: &util::Config) {
     }
 
     let parsed = util::parsecmd(&input);
-    let ret = util::execcmd(parsed);
+    let ret = util::execcmd(parsed, &config);
     match ret {
         Err(e) => {
             eprintln!("rssh: failed to execute command. {}", e);
@@ -38,43 +38,29 @@ fn prompt(config: &util::Config) {
     }
 }
 
-use std::fs;
-
-pub fn parsescript(path: &String, config: &util::Config) {
-    let content: String = match fs::read_to_string(&path) {
-        Err(e) => {
-            eprintln!("rssh: failed to read from {path}. {e}");
-            if config.error_ex == true {
-                exit(255);
-            }
-            return;
-        }
-        Ok(o) => o,
-    };
-
-    for i in content.lines() {
-        if i.len() < 1 {
-            continue;
-        }
-        if i.chars().nth(0).unwrap() == '#' {
-            continue;
-        }
-
-        let res = util::execcmd(util::parsecmd(&i.to_string()));
-        if config.error_ex == true {
-            if !res.unwrap().success() {
-                exit(1);
-            }
-        }
-    }
-}
-
 fn main() {
     let config = util::Config::new();
 
+    if config.cmd.len() > 0 {
+        if !config.cmd.eq("") {
+            let res = match util::execcmd(util::parsecmd(&config.cmd), &config) {
+                Err(e) => {
+                    eprintln!("rssh: failed to execute command. {e}");
+                    exit(1);
+                }
+                Ok(o) => o,
+            };
+
+            if !res.success() {
+                exit(1);
+            }
+            exit(0);
+        }
+    }
+
     if config.scripts.len() > 0 {
         for i in &config.scripts {
-            parsescript(&i, &config);
+            util::parsescript(&i, &config);
         }
         exit(0);
     }

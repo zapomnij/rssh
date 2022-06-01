@@ -3,6 +3,7 @@ pub struct Config {
     pub prompt: String,
     pub run_script: bool,
     pub scripts: Vec<String>,
+    pub cmd: String,
 }
 
 use std::{env, path::Path, process::exit};
@@ -46,25 +47,15 @@ impl Config {
             error_ex = true;
         }
 
+        let mut cmd = String::new();
         if matches.opt_present("c") {
-            let cmd = matches.opt_str("c");
-
-            let parsed: Vec<&str> = parsecmd(match &cmd {
+            cmd = match matches.opt_str("c") {
                 Some(t) => t,
                 None => {
                     eprintln!("rssh: missing argument");
                     exit(1);
                 }
-            });
-
-            let res = execcmd(parsed);
-            match res {
-                Err(e) => {
-                    eprintln!("rssh: failed to execute command. {e}");
-                    exit(1);
-                }
-                Ok(_) => exit(0),
-            }
+            };
         }
 
         let mut scripts = Vec::new();
@@ -82,6 +73,7 @@ impl Config {
             prompt,
             run_script,
             scripts,
+            cmd,
         }
     }
 }
@@ -91,9 +83,40 @@ pub fn parsecmd(line: &String) -> Vec<&str> {
     cmd
 }
 
+use std::fs;
+
+pub fn parsescript(path: &String, config: &Config) {
+    let content: String = match fs::read_to_string(&path) {
+        Err(e) => {
+            eprintln!("rssh: failed to read from {path}. {e}");
+            if config.error_ex == true {
+                exit(255);
+            }
+            return;
+        }
+        Ok(o) => o,
+    };
+
+    for i in content.lines() {
+        if i.len() < 1 {
+            continue;
+        }
+        if i.chars().nth(0).unwrap() == '#' {
+            continue;
+        }
+
+        let res = execcmd(parsecmd(&i.to_string()), &config);
+        if config.error_ex == true {
+            if !res.unwrap().success() {
+                exit(1);
+            }
+        }
+    }
+}
+
 use std::process::Command;
 
-pub fn execcmd(cmd_buf: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
+pub fn execcmd(cmd_buf: Vec<&str>, config: &Config) -> std::io::Result<std::process::ExitStatus> {
     let mut cmd_e: Vec<String> = Vec::new();
 
     for &i in &cmd_buf {
@@ -109,6 +132,16 @@ pub fn execcmd(cmd_buf: Vec<&str>) -> std::io::Result<std::process::ExitStatus> 
         }
 
         cmd_e.push(i.to_string());
+    }
+
+    if cmd_e[0].clone().eq(".") {
+        if cmd_e.len() < 2 {
+            eprintln!("rssh: missing argument");
+            return Ok(std::os::unix::process::ExitStatusExt::from_raw(1));
+        }
+
+        parsescript(&cmd_e[1], &config);
+        return Ok(std::os::unix::process::ExitStatusExt::from_raw(0));
     }
 
     if cmd_e[0].clone().eq("export") {
