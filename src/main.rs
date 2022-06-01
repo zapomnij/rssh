@@ -48,7 +48,7 @@ pub fn parsescript(path: &String, config: &lib::Config) {
                 exit(255);
             }
             return;
-        },
+        }
         Ok(o) => o,
     };
 

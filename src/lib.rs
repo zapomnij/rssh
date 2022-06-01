@@ -58,9 +58,11 @@ pub fn parsecmd(line: &String) -> Vec<&str> {
     cmd
 }
 
+use std::process::Command;
+
 pub fn execcmd(cmd_buf: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
     let mut cmd_e: Vec<String> = Vec::new();
-    
+
     for &i in &cmd_buf {
         if i.chars().nth(0).unwrap() == '$' {
             let addr = &i[1..];
@@ -145,16 +147,8 @@ pub fn execcmd(cmd_buf: Vec<&str>) -> std::io::Result<std::process::ExitStatus> 
         exit(0);
     }
 
-    let mut cmd = std::process::Command::new(&cmd_e[0]);
+    let mut cmd = Command::new(&cmd_e[0]);
     cmd.args(&cmd_e[1..]);
-    match cmd.output() {
-        Err(e) => {
-            eprintln!("rssh: failed to set output for command. {}", e);
-            return Err(e);
-        }
-        Ok(o) => o,
-    };
 
     cmd.status()
 }
-
