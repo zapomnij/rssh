@@ -38,12 +38,43 @@ fn prompt(config: &lib::Config) {
     }
 }
 
+use std::fs;
+
+pub fn parsescript(path: &String, config: &lib::Config) {
+    let content: String = match fs::read_to_string(&path) {
+        Err(e) => {
+            eprintln!("rssh: failed to read from {path}. {e}");
+            if config.error_ex == true {
+                exit(255);
+            }
+            return;
+        },
+        Ok(o) => o,
+    };
+
+    for i in content.lines() {
+        if i.len() < 1 {
+            continue;
+        }
+        if i.chars().nth(0).unwrap() == '#' {
+            continue;
+        }
+
+        let res = lib::execcmd(lib::parsecmd(&i.to_string()));
+        if config.error_ex == true {
+            if !res.unwrap().success() {
+                exit(1);
+            }
+        }
+    }
+}
+
 fn main() {
     let config = lib::Config::new();
 
     if config.scripts.len() > 0 {
         for i in &config.scripts {
-            lib::parsescript(&i, &config);
+            parsescript(&i, &config);
         }
         exit(0);
     }

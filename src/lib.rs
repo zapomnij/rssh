@@ -58,14 +58,31 @@ pub fn parsecmd(line: &String) -> Vec<&str> {
     cmd
 }
 
-pub fn execcmd(cmd_e: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
+pub fn execcmd(cmd_buf: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
+    let mut cmd_e: Vec<String> = Vec::new();
+    
+    for &i in &cmd_buf {
+        if i.chars().nth(0).unwrap() == '$' {
+            let addr = &i[1..];
+            let buf = match env::var(addr) {
+                Err(_) => String::from(""),
+                Ok(o) => o,
+            };
+
+            cmd_e.push(buf.clone());
+            break;
+        }
+
+        cmd_e.push(i.to_string());
+    }
+
     if cmd_e[0].clone().eq("export") {
         if cmd_e.len() < 2 {
             eprintln!("rssh: missing argument");
             return Ok(std::os::unix::process::ExitStatusExt::from_raw(1));
         }
 
-        let split: Vec<&str> = cmd_e[1].clone().split("=").collect();
+        let split: Vec<&str> = cmd_e[1].split("=").collect();
 
         if split.len() < 2 {
             eprintln!("rssh: passed argument is not valid environment variable");
@@ -141,33 +158,3 @@ pub fn execcmd(cmd_e: Vec<&str>) -> std::io::Result<std::process::ExitStatus> {
     cmd.status()
 }
 
-use std::fs;
-
-pub fn parsescript(path: &String, config: &Config) {
-    let content: String = match fs::read_to_string(&path) {
-        Err(e) => {
-            eprintln!("rssh: failed to read from {path}. {e}");
-            if config.error_ex == true {
-                exit(255);
-            }
-            return;
-        },
-        Ok(o) => o,
-    };
-
-    for i in content.lines() {
-        if i.len() < 1 {
-            continue;
-        }
-        if i.chars().nth(0).unwrap() == '#' {
-            continue;
-        }
-
-        let res = execcmd(parsecmd(&i.to_string()));
-        if config.error_ex == true {
-            if !res.unwrap().success() {
-                exit(1);
-            }
-        }
-    }
-}
