@@ -1,9 +1,9 @@
-pub mod lib;
+pub mod util;
 
 use std::io::Write;
 use std::process::exit;
 
-fn prompt(config: &lib::Config) {
+fn prompt(config: &util::Config) {
     print!("{}", config.prompt);
     std::io::stdout().flush().unwrap();
     let mut input = String::new();
@@ -19,8 +19,8 @@ fn prompt(config: &lib::Config) {
         return;
     }
 
-    let parsed = lib::parsecmd(&input);
-    let ret = lib::execcmd(parsed);
+    let parsed = util::parsecmd(&input);
+    let ret = util::execcmd(parsed);
     match ret {
         Err(e) => {
             eprintln!("rssh: failed to execute command. {}", e);
@@ -40,7 +40,7 @@ fn prompt(config: &lib::Config) {
 
 use std::fs;
 
-pub fn parsescript(path: &String, config: &lib::Config) {
+pub fn parsescript(path: &String, config: &util::Config) {
     let content: String = match fs::read_to_string(&path) {
         Err(e) => {
             eprintln!("rssh: failed to read from {path}. {e}");
@@ -60,7 +60,7 @@ pub fn parsescript(path: &String, config: &lib::Config) {
             continue;
         }
 
-        let res = lib::execcmd(lib::parsecmd(&i.to_string()));
+        let res = util::execcmd(util::parsecmd(&i.to_string()));
         if config.error_ex == true {
             if !res.unwrap().success() {
                 exit(1);
@@ -70,7 +70,7 @@ pub fn parsescript(path: &String, config: &lib::Config) {
 }
 
 fn main() {
-    let config = lib::Config::new();
+    let config = util::Config::new();
 
     if config.scripts.len() > 0 {
         for i in &config.scripts {
