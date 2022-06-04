@@ -1,3 +1,4 @@
+pub mod execute;
 pub mod util;
 
 use std::io::Write;
@@ -19,8 +20,8 @@ fn prompt(config: &util::Config) {
         return;
     }
 
-    let parsed = util::parsecmd(&input);
-    let ret = util::execcmd(parsed, &config);
+    let parsed = execute::parsecmd(&input);
+    let ret = execute::execcmd::execcmd(parsed, &config);
     match ret {
         Err(e) => {
             eprintln!("rssh: failed to execute command. {}", e);
@@ -43,7 +44,7 @@ fn main() {
 
     if config.cmd.len() > 0 {
         if !config.cmd.eq("") {
-            let res = match util::execcmd(util::parsecmd(&config.cmd), &config) {
+            let res = match execute::execcmd::execcmd(execute::parsecmd(&config.cmd), &config) {
                 Err(e) => {
                     eprintln!("rssh: failed to execute command. {e}");
                     exit(1);
@@ -60,7 +61,7 @@ fn main() {
 
     if config.scripts.len() > 0 {
         for i in &config.scripts {
-            util::parsescript(&i, &config);
+            execute::parsescript(&i, &config);
         }
         exit(0);
     }
