@@ -84,8 +84,23 @@ impl Config {
 }
 
 pub fn parsecmd(line: &String) -> Vec<&str> {
-    let cmd = line.split_whitespace().collect();
-    cmd
+    let dquoteparse: Vec<&str> = line.split("\"").collect();
+
+    let mut dquoteparsed: Vec<&str> = Vec::new();
+    let mut index: usize = 1;
+    for parse in dquoteparse {
+        if (index % 2) == 0 {
+            dquoteparsed.push(&parse);
+        } else {
+            let split: Vec<&str> = parse.split_whitespace().collect();
+            for i in split {
+                dquoteparsed.push(i);
+            }
+        }
+        index += 1;
+    }
+
+    dquoteparsed
 }
 
 use std::fs;
