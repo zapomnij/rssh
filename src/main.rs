@@ -39,8 +39,10 @@ fn prompt(config: &util::Config) {
     }
 }
 
+use std::path::Path;
+
 fn main() {
-    let config = util::Config::new();
+    let mut config = util::Config::new();
 
     if config.cmd.len() > 0 {
         if !config.cmd.eq("") {
@@ -66,7 +68,32 @@ fn main() {
         exit(0);
     }
 
+    let homedir = match std::env::var("HOME") {
+        Err(_) => String::from("$ "),
+        Ok(s) => s,
+    };
+
+    let format: String = format!("{}/.rssh_rc", homedir);
+    let rc = Path::new(&format);
+    if rc.is_file() {
+        let format2: String = format!(". {}", &format);
+        match execute::execcmd::execcmd(execute::parsecmd(&format2), &config) {
+            Err(_) => {
+                eprintln!("rssh: failed to source rssh_rc");
+            }
+            Ok(o) => {
+                if !o.success() {
+                    eprintln!("rssh: rssh_rc exited with non-zero status");
+                }
+            }
+        };
+    }
+
     loop {
         prompt(&config);
+        config.prompt = match std::env::var("PROMPT") {
+            Err(_) => String::from("$ "),
+            Ok(s) => s,
+        };
     }
 }
